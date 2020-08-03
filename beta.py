@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import yfinance as yf
 import pandas as pd
 import numpy as np
+import math
 import sys
 
 # TODO: Portfolio class that takes tickers and adds and removes them from main portfolio
@@ -57,9 +58,12 @@ class Beta():
             return -1
 
 
+######################### Portfolio Class ###########################
+
 class Portfolio():
     benchmark = None
     portfolio = []
+    # TODO: Convert breakdown to dataframe
     breakdown = []
     sharpe = {}
 
@@ -73,18 +77,20 @@ class Portfolio():
 
     def __init__(self, portfolio=None, weights=None, benchmark='SPY', start='2019-3-16', end='2020-8-1'): #todo, default end today
         self.start = start
+        # TODO: Set end date to today's date
         self.end = end
         self.benchmark = benchmark
         data = self.pull_market_data(self.benchmark)
         self.initialize_charts(data)
+        #print(self.daily_close, ",/,", self.daily_close.std(axis=0))
+
         if portfolio != None:
             print('Portfolio:', portfolio)
             self.add_securities(portfolio)
+            self.stdev = self.daily_close.std(axis=0)
             if weights != None:
                 self.calculate_sharpe(weights)
             else: self.calculate_sharpe()
-        #print(self.daily_close, ",/,", self.daily_close.std(axis=0))
-        self.stdev = self.daily_close.std(axis=0)
 
     def pull_market_data(self, ticker):
         df = pd.DataFrame()
@@ -155,7 +161,8 @@ class Portfolio():
             if k != 'SPY': # if we aren't the benchmark
                 asset['returns'] = expected_returns[k]
                 asset['numerator'] = asset['returns']-expected_returns['SPY']
-                asset['denominator'] = p.stdev[k]
+                #print(type(self.stdev),self.stdev)
+                asset['denominator'] = self.stdev[k]
                 asset['sharpe'] = K*(asset['numerator']/asset['denominator'])
                 #todo: allocations based on weights
                 if weights == None:
